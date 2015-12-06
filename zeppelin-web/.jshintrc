@@ -25,11 +25,6 @@
     "angular": false,
     "_": false,
     "jQuery": false,
-    "hljs": false,
-    "confirm": false,
-    "alert": false,
-    "nv": false,
-    "ace": false,
-    "d3": false
+    "hljs": false
   }
 }

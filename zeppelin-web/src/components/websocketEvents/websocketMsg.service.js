@@ -85,10 +85,6 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
       websocketEvents.sendNewEvent({op: 'PARAGRAPH_REMOVE', data: {id: paragraphId}});
     },
 
-    clearParagraphOutput: function(paragraphId) {
-      websocketEvents.sendNewEvent({op: 'PARAGRAPH_CLEAR_OUTPUT', data: {id: paragraphId}});
-    },
-
     completion: function(paragraphId, buf, cursor) {
       websocketEvents.sendNewEvent({
         op : 'COMPLETION',
@@ -109,15 +105,6 @@ angular.module('zeppelinWebApp').service('websocketMsgSrv', function($rootScope,
           paragraph: paragraphData,
           config: paragraphConfig,
           params: paragraphParams
-        }
-      });
-    },
-
-    importNotebook: function(notebook) {
-      websocketEvents.sendNewEvent({
-        op: 'IMPORT_NOTE',
-        data: {
-          notebook: notebook
         }
       });
     },

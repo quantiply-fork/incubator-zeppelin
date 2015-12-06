@@ -59,7 +59,6 @@ module.exports = function(config) {
       'src/app/app.js',
       'src/app/app.controller.js',
       'src/app/**/*.js',
-      'src/components/**/*.js',
       'test/spec/**/*.js'
     ],
 
@@ -81,23 +80,10 @@ module.exports = function(config) {
       'PhantomJS'
     ],
 
-    reporters: ['coverage','progress'],
-
-    preprocessors: {
-      'src/*/{*.js,!(test)/**/*.js}': 'coverage'
-    },
-
-    coverageReporter: {
-      type: 'html',
-      dir: '../reports/zeppelin-web-coverage',
-      subdir: '.'
-    },
-
     // Which plugins to enable
     plugins: [
       'karma-phantomjs-launcher',
-      'karma-jasmine',
-      'karma-coverage'
+      'karma-jasmine'
     ],
 
     // Continuous Integration mode

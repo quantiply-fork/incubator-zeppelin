@@ -1,3 +1,4 @@
+/* global confirm:false, alert:false, _:false */
 /* jshint loopfunc: true */
 /*
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,7 +105,7 @@ angular.module('zeppelinWebApp').controller('InterpreterCtrl', function($scope, 
 
   $scope.newInterpreterGroupChange = function() {
     var el = _.pluck(_.filter($scope.availableInterpreters, { 'group': $scope.newInterpreterSetting.group }), 'properties');
-
+    
     var properties = {};
     for (var i=0; i < el.length; i++) {
       var intpInfo = el[i];
@@ -115,7 +116,7 @@ angular.module('zeppelinWebApp').controller('InterpreterCtrl', function($scope, 
         };
       }
     }
-
+    
     $scope.newInterpreterSetting.properties = properties;
   };
 
@@ -188,7 +189,7 @@ angular.module('zeppelinWebApp').controller('InterpreterCtrl', function($scope, 
       if (!$scope.newInterpreterSetting.propertyKey || $scope.newInterpreterSetting.propertyKey === '') {
         return;
       }
-
+      
       $scope.newInterpreterSetting.properties[$scope.newInterpreterSetting.propertyKey] = {
         value: $scope.newInterpreterSetting.propertyValue
       };

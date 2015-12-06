@@ -41,7 +41,7 @@ limitations under the License.
                      require : ['ace/ext/language_tools']
                    }"
            ng-model="paragraph.text"
-           ng-class="{'disable': paragraph.status == 'RUNNING' || paragraph.status == 'PENDING', 'paragraph-text--dirty' : dirtyText !== undefined}">
+           ng-class="{'disable': paragraph.status == 'RUNNING' || paragraph.status == 'PENDING', 'paragraph-text--dirty' : dirtyText}">
       </div>
     </div>
 
@@ -186,9 +186,9 @@ limitations under the License.
                   jqyoui-droppable="{multiple:true, onDrop:'onGraphOptionChange()'}"
                   class="list-unstyled">
                 <li ng-repeat="item in paragraph.config.graph.keys">
-                  <div class="btn btn-primary btn-xs">
+                  <button class="btn btn-primary btn-xs">
                     {{item.name}} <span class="fa fa-close" ng-click="removeGraphOptionKeys($index)"></span>
-                  </div>
+                  </button>
                 </li>
               </ul>
             </span>
@@ -201,9 +201,9 @@ limitations under the License.
                   jqyoui-droppable="{multiple:true, onDrop:'onGraphOptionChange()'}"
                   class="list-unstyled">
                 <li ng-repeat="item in paragraph.config.graph.groups">
-                  <div class="btn btn-success btn-xs">
+                  <button class="btn btn-success btn-xs">
                     {{item.name}} <span class="fa fa-close" ng-click="removeGraphOptionGroups($index)"></span>
-                  </div>
+                  </button>
                 </li>
               </ul>
             </span>
@@ -248,9 +248,9 @@ limitations under the License.
                   class="list-unstyled"
                   style="height:36px">
                 <li ng-if="paragraph.config.graph.scatter.xAxis">
-                  <div class="btn btn-primary btn-xs">
+                  <button class="btn btn-primary btn-xs">
                     {{paragraph.config.graph.scatter.xAxis.name}} <span class="fa fa-close" ng-click="removeScatterOptionXaxis($index)"></span>
-                  </div>
+                  </button>
                 </li>
               </ul>
             </span>
@@ -264,9 +264,9 @@ limitations under the License.
                   class="list-unstyled"
                   style="height:36px">
                 <li ng-if="paragraph.config.graph.scatter.yAxis">
-                  <div class="btn btn-success btn-xs">
+                  <button class="btn btn-success btn-xs">
                     {{paragraph.config.graph.scatter.yAxis.name}} <span class="fa fa-close" ng-click="removeScatterOptionYaxis($index)"></span>
-                  </div>
+                  </button>
                 </li>
               </ul>
             </span>
@@ -280,9 +280,9 @@ limitations under the License.
                   class="list-unstyled"
                   style="height:36px">
                 <li ng-if="paragraph.config.graph.scatter.group">
-                  <div class="btn btn-info btn-xs">
+                  <button class="btn btn-info btn-xs">
                     {{paragraph.config.graph.scatter.group.name}} <span class="fa fa-close" ng-click="removeScatterOptionGroup($index)"></span>
-                  </div>
+                  </button>
                 </li>
               </ul>
             </span>
@@ -302,9 +302,9 @@ limitations under the License.
                   class="list-unstyled"
                   style="height:36px">
                 <li ng-if="paragraph.config.graph.scatter.size">
-                  <div class="btn btn-xs" style="color:white" ng-class="{'btn-warning': isValidSizeOption(paragraph.config.graph.scatter, paragraph.result.rows)}">
+                  <button class="btn btn-xs" style="color:white" ng-class="{'btn-warning': isValidSizeOption(paragraph.config.graph.scatter, paragraph.result.rows)}">
                     {{paragraph.config.graph.scatter.size.name}} <span class="fa fa-close" ng-click="removeScatterOptionSize($index)"></span>
-                  </div>
+                  </button>
                 </li>
               </ul>
             </span>
@@ -372,13 +372,11 @@ limitations under the License.
       </div>
 
       <div id="p{{paragraph.id}}_html"
-           class="resultContained"
            ng-if="paragraph.result.type == 'HTML'"
            ng-Init="loadResultType(paragraph.result)">
       </div>
 
       <div id="p{{paragraph.id}}_angular"
-           class="resultContained"
            ng-if="paragraph.result.type == 'ANGULAR'"
            ng-Init="loadResultType(paragraph.result)">
       </div>
@@ -394,9 +392,10 @@ limitations under the License.
            ng-if="paragraph.status == 'ERROR'"
            ng-bind="paragraph.errorMessage">
       </div>
+
+      <div ng-if="!asIframe" id="{{paragraph.id}}_executionTime" class="executionTime" ng-bind-html="getExecutionTime()"></div>
     </div>
   </div>
-
   <div id="{{paragraph.id}}_control" class="control" ng-show="!asIframe">
 
     <span>
@@ -410,7 +409,7 @@ limitations under the License.
     <!-- Run / Cancel button -->
     <span class="icon-control-play" style="cursor:pointer;color:#3071A9" tooltip-placement="top" tooltip="Run this paragraph (Shift+Enter)"
           ng-click="runParagraph(getEditorValue())"
-          ng-show="paragraph.status!='RUNNING' && paragraph.status!='PENDING' && paragraph.config.enabled"></span>
+          ng-show="paragraph.status!='RUNNING' && paragraph.status!='PENDING'"></span>
     <span class="icon-control-pause" style="cursor:pointer;color:#CD5C5C" tooltip-placement="top" tooltip="Cancel"
           ng-click="cancelParagraph()"
           ng-show="paragraph.status=='RUNNING' || paragraph.status=='PENDING'"></span>
@@ -418,6 +417,9 @@ limitations under the License.
           ng-click="toggleEditor()"></span>
     <span class="{{paragraph.config.tableHide ? 'icon-notebook' : 'icon-book-open'}}" style="cursor:pointer;" tooltip-placement="top" tooltip="{{(paragraph.config.tableHide ? 'Show' : 'Hide') + ' output'}}"
           ng-click="toggleOutput()"></span>
+    <span  style="cursor:pointer;"
+          ng-click="saveParagraph()"
+          ng-show="dirtyText"></span>
     <span class="dropdown navbar-right">
       <span class="icon-settings" style="cursor:pointer"
             data-toggle="dropdown"
@@ -463,16 +465,9 @@ limitations under the License.
              ng-click="showLineNumbers()"
              ng-show="!paragraph.config.lineNumbers"> Show line numbers</a>
         </li>
-        <li>
-          <a class="icon-control-play" style="cursor:pointer"
-             ng-click="toggleEnableDisable()"> {{paragraph.config.enabled ? "Disable" : "Enable"}}  run</a>
-        </li>
+
         <li><a class="icon-share-alt" style="cursor:pointer"
                ng-click="goToSingleParagraph()"> Link this paragraph</a>
-        </li>
-        <li>
-          <a class="fa fa-eraser" style="cursor:pointer"
-             ng-click="clearParagraphOutput()"> Clear output</a>
         </li>
         <li>
           <!-- remove paragraph -->
@@ -482,10 +477,4 @@ limitations under the License.
       </ul>
     </span>
   </div>
-
-  <div ng-if="!asIframe" class="paragraphFooter">
-    <div ng-show="!paragraph.config.tableHide && !viewOnly" id="{{paragraph.id}}_executionTime" class="executionTime" ng-bind-html="getExecutionTime()">
-    </div>
-  </div>
-  
 </div>

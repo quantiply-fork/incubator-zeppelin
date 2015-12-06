@@ -1,3 +1,4 @@
+/* global $:false, jQuery:false, ace:false, confirm:false, d3:false, nv:false*/
 /*jshint loopfunc: true, unused:false */
 /*
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,14 +55,12 @@ angular.module('zeppelinWebApp')
 
   $scope.renderHtml = function() {
     var retryRenderer = function() {
-      if (angular.element('#p' + $scope.paragraph.id + '_html').length) {
+      if ($('#p'+$scope.paragraph.id+'_html').length) {
         try {
-          angular.element('#p' + $scope.paragraph.id + '_html').html($scope.paragraph.result.msg);
+          $('#p'+$scope.paragraph.id+'_html').html($scope.paragraph.result.msg);
 
-          angular.element('#p' + $scope.paragraph.id + '_html').find('pre code').each(function(i, e) {
-            hljs.highlightBlock(e);
-          });
-        } catch (err) {
+          $('#p'+$scope.paragraph.id+'_html').find('pre code').each(function(i, e) { hljs.highlightBlock(e); });
+        } catch(err) {
           console.log('HTML rendering error %o', err);
         }
       } else {
@@ -128,16 +127,12 @@ angular.module('zeppelinWebApp')
     if (!config.graph.scatter) {
       config.graph.scatter = {};
     }
-
-    if (config.enabled === undefined) {
-      config.enabled = true;
-    }
   };
 
   $scope.getIframeDimensions = function () {
     if ($scope.asIframe) {
       var paragraphid = '#' + $routeParams.paragraphId + '_container';
-      var height = angular.element(paragraphid).height();
+      var height = $(paragraphid).height();
       return height;
     }
     return 0;
@@ -172,7 +167,6 @@ angular.module('zeppelinWebApp')
       var oldGraphMode = $scope.getGraphMode();
       var newGraphMode = $scope.getGraphMode(data.paragraph);
       var resultRefreshed = (data.paragraph.dateFinished !== $scope.paragraph.dateFinished);
-      var statusChanged = (data.paragraph.status !== $scope.paragraph.status);
 
       //console.log("updateParagraph oldData %o, newData %o. type %o -> %o, mode %o -> %o", $scope.paragraph, data, oldType, newType, oldGraphMode, newGraphMode);
 
@@ -229,20 +223,7 @@ angular.module('zeppelinWebApp')
       } else if (newType === 'ANGULAR' && resultRefreshed) {
         $scope.renderAngular();
       }
-
-      if (statusChanged || resultRefreshed) {
-        // when last paragraph runs, zeppelin automatically appends new paragraph.
-        // this broadcast will focus to the newly inserted paragraph
-        var paragraphs = angular.element('div[id$="_paragraphColumn_main"');
-        if (paragraphs.length >= 2 && paragraphs[paragraphs.length-2].id.startsWith($scope.paragraph.id)) {
-          // rendering output can took some time. So delay scrolling event firing for sometime.
-          setTimeout(function() {
-            $rootScope.$broadcast('scrollToCursor');
-          }, 500);
-        }
-      }
     }
-
   });
 
   $scope.isRunning = function() {
@@ -272,13 +253,6 @@ angular.module('zeppelinWebApp')
     $scope.dirtyText = undefined;
   };
 
-  $scope.toggleEnableDisable = function () {
-    $scope.paragraph.config.enabled = $scope.paragraph.config.enabled ? false : true;
-    var newParams = angular.copy($scope.paragraph.settings.params);
-    var newConfig = angular.copy($scope.paragraph.config);
-    commitParagraph($scope.paragraph.title, $scope.paragraph.text, newConfig, newParams);
-  };
-
   $scope.moveUp = function() {
     $scope.$emit('moveParagraphUp', $scope.paragraph.id);
   };
@@ -297,10 +271,6 @@ angular.module('zeppelinWebApp')
       console.log('Remove paragraph');
       websocketMsgSrv.removeParagraph($scope.paragraph.id);
     }
-  };
-
-  $scope.clearParagraphOutput = function() {
-    websocketMsgSrv.clearParagraphOutput($scope.paragraph.id);
   };
 
   $scope.toggleEditor = function() {
@@ -479,15 +449,12 @@ angular.module('zeppelinWebApp')
       $scope.editor.setShowFoldWidgets(false);
       $scope.editor.setHighlightActiveLine(false);
       $scope.editor.setHighlightGutterLine(false);
-      $scope.editor.getSession().setUseWrapMode(true);
       $scope.editor.setTheme('ace/theme/chrome');
       $scope.editor.focus();
+      var height = $scope.editor.getSession().getScreenLength() * $scope.editor.renderer.lineHeight + $scope.editor.renderer.scrollBar.getWidth();
+      setEditorHeight(_editor.container.id, height);
 
-      autoAdjustEditorHeight(_editor.container.id);
-      angular.element(window).resize(function() {
-        autoAdjustEditorHeight(_editor.container.id);
-      });
-
+      $scope.editor.getSession().setUseWrapMode(true);
       if (navigator.appVersion.indexOf('Mac') !== -1 ) {
         $scope.editor.setKeyboardHandler('ace/keyboard/emacs');
       } else if (navigator.appVersion.indexOf('Win') !== -1 ||
@@ -575,8 +542,11 @@ angular.module('zeppelinWebApp')
         $scope.handleFocus(false);
       });
 
+
       $scope.editor.getSession().on('change', function(e, editSession) {
-        autoAdjustEditorHeight(_editor.container.id);
+        height = editSession.getScreenLength() * $scope.editor.renderer.lineHeight + $scope.editor.renderer.scrollBar.getWidth();
+        setEditorHeight(_editor.container.id, height);
+        $scope.editor.resize();
       });
 
       $scope.setParagraphMode($scope.editor.getSession(), $scope.editor.getSession().getValue());
@@ -614,20 +584,14 @@ angular.module('zeppelinWebApp')
       $scope.editor.keyBinding.onCommandKey = function(e, hashId, keyCode) {
         if ($scope.editor.completer && $scope.editor.completer.activated) { // if autocompleter is active
         } else {
-          // fix ace editor focus issue in chrome (textarea element goes to top: -1000px after focused by cursor move)
-          angular.element('#' + $scope.paragraph.id + '_editor > textarea').css('top', 0);
-
           var numRows;
           var currentRow;
-
           if (keyCode === 38 || (keyCode === 80 && e.ctrlKey)) {  // UP
             numRows = $scope.editor.getSession().getLength();
             currentRow = $scope.editor.getCursorPosition().row;
             if (currentRow === 0) {
               // move focus to previous paragraph
               $scope.$emit('moveFocusToPreviousParagraph', $scope.paragraph.id);
-            } else {
-              $scope.scrollToCursor($scope.paragraph.id, -1);
             }
           } else if (keyCode === 40 || (keyCode === 78 && e.ctrlKey)) {  // DOWN
             numRows = $scope.editor.getSession().getLength();
@@ -635,8 +599,6 @@ angular.module('zeppelinWebApp')
             if (currentRow === numRows-1) {
               // move focus to next paragraph
               $scope.$emit('moveFocusToNextParagraph', $scope.paragraph.id);
-            } else {
-              $scope.scrollToCursor($scope.paragraph.id, 1);
             }
           }
         }
@@ -645,64 +607,8 @@ angular.module('zeppelinWebApp')
     }
   };
 
-  var autoAdjustEditorHeight = function(id) {
-    var editor = $scope.editor;
-    var height = editor.getSession().getScreenLength() * editor.renderer.lineHeight + editor.renderer.scrollBar.getWidth();
-
-    angular.element('#' + id).height(height.toString() + 'px');
-    editor.resize();
-  };
-
-  $rootScope.$on('scrollToCursor', function(event) {
-    // scroll on 'scrollToCursor' event only when cursor is in the last paragraph
-    var paragraphs = angular.element('div[id$="_paragraphColumn_main"');
-    if (paragraphs[paragraphs.length-1].id.startsWith($scope.paragraph.id)) {
-      $scope.scrollToCursor($scope.paragraph.id, 0);
-    }
-  });
-
-  /** scrollToCursor if it is necessary
-   * when cursor touches scrollTriggerEdgeMargin from the top (or bottom) of the screen, it autoscroll to place cursor around 1/3 of screen height from the top (or bottom)
-   * paragraphId : paragraph that has active cursor
-   * lastCursorMove : 1(down), 0, -1(up) last cursor move event
-   **/
-  $scope.scrollToCursor = function(paragraphId, lastCursorMove) {
-    if (!$scope.editor.isFocused()) {
-     // only make sense when editor is focused
-     return;
-    }
-    var lineHeight = $scope.editor.renderer.lineHeight;
-    var headerHeight = 103; // menubar, notebook titlebar
-    var scrollTriggerEdgeMargin = 50;
-
-    var documentHeight = angular.element(document).height();
-    var windowHeight = angular.element(window).height();  // actual viewport height
-
-    var scrollPosition = angular.element(document).scrollTop();
-    var editorPosition = angular.element('#'+paragraphId+'_editor').offset();
-    var position = $scope.editor.getCursorPosition();
-    var lastCursorPosition = $scope.editor.renderer.$cursorLayer.getPixelPosition(position, true);
-
-    var calculatedCursorPosition = editorPosition.top + lastCursorPosition.top + 16*lastCursorMove;
-
-    var scrollTargetPos;
-    if (calculatedCursorPosition < scrollPosition + headerHeight + scrollTriggerEdgeMargin) {
-      scrollTargetPos = calculatedCursorPosition - headerHeight - ((windowHeight-headerHeight)/3);
-      if (scrollTargetPos < 0) {
-        scrollTargetPos = 0;
-      }
-    } else if(calculatedCursorPosition > scrollPosition + scrollTriggerEdgeMargin + windowHeight - headerHeight) {
-      scrollTargetPos = calculatedCursorPosition - headerHeight - ((windowHeight-headerHeight)*2/3);
-
-      if (scrollTargetPos > documentHeight) {
-        scrollTargetPos = documentHeight;
-      }
-    }
-    angular.element('body').scrollTo(scrollTargetPos, {axis: 'y', interrupt: true, duration:200});
-  };
-
   var setEditorHeight = function(id, height) {
-    angular.element('#' + id).height(height.toString() + 'px');
+    $('#' + id).height(height.toString() + 'px');
   };
 
   $scope.getEditorValue = function() {
@@ -722,12 +628,12 @@ angular.module('zeppelinWebApp')
       }
       return '';
     }
-    var desc = 'Took ' + (timeMs/1000) + ' seconds';
+    var desc = 'Took ' + (timeMs/1000) + ' seconds.';
     if ($scope.isResultOutdated()){
       desc += ' (outdated)';
     }
     return desc;
-  };
+  };  
 
   $scope.isResultOutdated = function() {
     var pdata = $scope.paragraph;
@@ -743,22 +649,10 @@ angular.module('zeppelinWebApp')
     }
   });
 
-  $scope.$on('focusParagraph', function(event, paragraphId, cursorPos) {
+  $scope.$on('focusParagraph', function(event, paragraphId) {
     if ($scope.paragraph.id === paragraphId) {
-      // focus editor
       $scope.editor.focus();
-
-      // move cursor to the first row (or the last row)
-      var row;
-      if (cursorPos >= 0) {
-        row = cursorPos;
-        var column = 0;
-        $scope.editor.gotoLine(row, 0);
-      } else {
-        row = $scope.editor.session.getLength() - 1;
-        $scope.editor.gotoLine(row + 1, 0);
-      }
-      $scope.scrollToCursor($scope.paragraph.id, 0);
+      $('body').scrollTo('#'+paragraphId+'_editor', 300, {offset:-60});
     }
   });
 
@@ -860,7 +754,7 @@ angular.module('zeppelinWebApp')
       clearUnknownColsFromGraphOption();
       // set graph height
       var height = $scope.paragraph.config.graph.height;
-      angular.element('#p' + $scope.paragraph.id + '_graph').height(height);
+      $('#p'+$scope.paragraph.id+'_graph').height(height);
 
       if (!type || type === 'table') {
         setTable($scope.paragraph.result, refresh);
@@ -946,16 +840,16 @@ angular.module('zeppelinWebApp')
 
       html += '</table>';
 
-      angular.element('#p' + $scope.paragraph.id + '_table').html(html);
-      angular.element('#p' + $scope.paragraph.id + '_table').perfectScrollbar();
+      $('#p' + $scope.paragraph.id + '_table').html(html);
+      $('#p' + $scope.paragraph.id + '_table').perfectScrollbar();
 
       // set table height
       var height = $scope.paragraph.config.graph.height;
-      angular.element('#p' + $scope.paragraph.id + '_table').height(height);
+      $('#p'+$scope.paragraph.id+'_table').height(height);
     };
 
     var retryRenderer = function() {
-      if (angular.element('#p' + $scope.paragraph.id + '_table').length) {
+      if ($('#p'+$scope.paragraph.id+'_table').length) {
         try {
           renderTable();
         } catch(err) {
@@ -1089,7 +983,7 @@ angular.module('zeppelinWebApp')
     };
 
     var retryRenderer = function() {
-      if (angular.element('#p' + $scope.paragraph.id + '_' + type + ' svg').length !== 0) {
+      if ($('#p'+$scope.paragraph.id+'_'+type+' svg').length !== 0) {
         try {
           renderChart();
         } catch(err) {
@@ -1764,7 +1658,7 @@ angular.module('zeppelinWebApp')
   };
 
   $scope.setGraphHeight = function() {
-    var height = angular.element('#p' + $scope.paragraph.id + '_graph').height();
+    var height = $('#p'+$scope.paragraph.id+'_graph').height();
 
     var newParams = angular.copy($scope.paragraph.settings.params);
     var newConfig = angular.copy($scope.paragraph.config);
@@ -1783,7 +1677,7 @@ angular.module('zeppelinWebApp')
 
   $scope.goToSingleParagraph = function () {
     var noteId = $route.current.pathParams.noteId;
-    var redirectToUrl = location.protocol + '//' + location.host + location.pathname + '#/notebook/' + noteId + '/paragraph/' + $scope.paragraph.id+'?asIframe';
+    var redirectToUrl = location.protocol + '//' + location.host + '/#/notebook/' + noteId + '/paragraph/' + $scope.paragraph.id+'?asIframe';
     $window.open(redirectToUrl);
   };
 });

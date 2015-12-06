@@ -16,7 +16,7 @@ limitations under the License.
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
-    <title></title>
+    <title>Quantezza Analytics Playbook™</title>
     <!-- disable caches for all browser -->
     <meta http-equiv="cache-control" content="max-age=0" />
     <meta http-equiv="cache-control" content="no-cache" />
@@ -71,10 +71,7 @@ limitations under the License.
     <!-- Modal ::  Keyboard shortcuts -->
     <div ng-include src="'components/modal-shortcut/modal-shortcut.html'"></div>
     <div ng-controller="NotenameCtrl as notenamectrl">
-   		 <div id="note-modal-container" ng-include src="'components/noteName-create/note-name-dialog.html'"></div>
-    </div>
-    <div ng-controller="NoteImportCtrl as noteimportctrl">
-      <div id="note-import-container" ng-include src="'components/noteName-import/note-import-dialog.html'"></div>
+     <div id="note-modal-container" ng-include src="'components/noteName-create/note-name-dialog.html'"></div>
     </div>
     <!-- build:js(.) scripts/oldieshim.js -->
     <!--[if lt IE 9]>
@@ -132,7 +129,6 @@ limitations under the License.
     <script src="components/navbar/navbar.controller.js"></script>
     <script src="components/ngescape/ngescape.directive.js"></script>
     <script src="components/noteName-create/notename.controller.js"></script>
-    <script src="components/noteName-import/notenameImport.controller.js"></script>
     <script src="components/popover-html-unsafe/popover-html-unsafe.directive.js"></script>
     <script src="components/ngenter/ngenter.directive.js"></script>
     <script src="components/dropdowninput/dropdowninput.directive.js"></script>
@@ -142,8 +138,6 @@ limitations under the License.
     <script src="components/websocketEvents/websocketEvents.factory.js"></script>
     <script src="components/notebookListDataFactory/notebookList.datafactory.js"></script>
     <script src="components/baseUrl/baseUrl.service.js"></script>
-    <script src="components/browser-detect/browserDetect.service.js"></script>
-    <script src="components/saveAs/saveAs.service.js"></script>
     <!-- endbuild -->
   </body>
 </html>
